@@ -1,0 +1,1 @@
+cmake -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/clang-18 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++-18 -S/home/farhad/Desktop/C++/ComputerGraphic -B/home/farhad/Desktop/C++/ComputerGraphic/build -G "Unix Makefiles"
