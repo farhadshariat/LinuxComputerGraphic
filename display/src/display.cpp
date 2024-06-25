@@ -72,11 +72,17 @@ void Display::draw_grid()
 			color_buffer[window_width * y + x] = 0xFF333333;
 }
 
+void Display::draw_pixel(int x, int y, uint32_t color)
+{	
+	if(x>=0 && x< window_width && y>=0 && y < window_height)
+		color_buffer[window_width * y + x] = color;
+}
+
 void Display::draw_rect(int x_a, int y_a, int width, int height, uint32_t color)
 {
 	for (int y = y_a; y < height + y_a; ++y)
 		for (int x = x_a; x < width + x_a; ++x)
-			color_buffer[window_width * y + x] = color;
+			draw_pixel(x, y, color);
 }
 
 void Display::clear_color_buffer(uint32_t color)
