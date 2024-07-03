@@ -1,18 +1,18 @@
 #include "display/include/display.h"
 #include "geometry/vector.h"
-// #include "eigen3/Eigen/Dense"
+#include "geometry/triangle.h"
+#include "geometry/mesh.h"
+#include <array>
 
-static bool is_running = false;
-
-const int N_POINT = 9*9*9;
-
-std::vector<vec3_t> cube_points(N_POINT, {0.0, 0.0, 0.0});
-std::vector<vec2_t> projected_points(N_POINT, {0.0, 0.0});
+std::vector<triangle_t> triangles_to_render(12, {0,0,0}); 
 
 vec3_t camera_position = {.x=0, .y=0, .z=-5};
 vec3_t cube_rotation = {.x=0, .y=0, .z=0};
 
 float fov_factor = 640;
+
+static bool is_running = false;
+int previous_frame_time = 0;
 
 //c++ way :(
 void setup(Display& display)
@@ -26,20 +26,6 @@ void setup(Display& display)
 		display.window_width,
 		display.window_height
 	);
-
-	int point_count = 0;
-
-	for (float x = -1; x <= 1; x+=0.25)
-	{
-		for (float y = -1; y <= 1; y+=0.25)
-		{
-			for (float z = -1; z <= 1; z+=0.25)
-			{
-				cube_points[point_count++] = (vec3_t){.x= x, .y=y, .z=z};
-			}
-		}
-	}
-	
 }
 
 void process_input()
@@ -72,42 +58,65 @@ vec2_t project(vec3_t point)
 	return projected_point;
 } 
 
-void update()
+void update(Display& display)
 {
+	while(!SDL_TICKS_PASSED(SDL_GetTicks(), previous_frame_time + frame_target_time));
+
+	previous_frame_time = SDL_GetTicks();
+
 	cube_rotation.x += 0.01;
 	cube_rotation.y += 0.01;
 	cube_rotation.z += 0.01;
 
-	for (size_t i = 0; i < N_POINT; i++)
+	for (size_t i = 0; i < mesh_faces.size(); i++)
 	{
-		vec3_t point= cube_points[i];
+		auto mesh_face = mesh_faces[i];
 
-		point.rotate_x(cube_rotation.x);
-		point.rotate_y(cube_rotation.y);
-		point.rotate_z(cube_rotation.z);
+		std::array<vec3_t,3> face_vertices;
+		face_vertices[0] = mesh_vertices[mesh_face.a - 1];
+		face_vertices[1] = mesh_vertices[mesh_face.b - 1];
+		face_vertices[2] = mesh_vertices[mesh_face.c - 1];
 
-		point.z -= camera_position.z;
+		triangle_t projected_triangle;
 
-		vec2_t projected_point = project(point);
+		for (size_t j = 0; j < face_vertices.size(); j++)
+		{
+			auto transformed_vertex = face_vertices[j];
 
-		projected_points[i] = projected_point;
+			transformed_vertex.rotate_x(cube_rotation.x);
+			transformed_vertex.rotate_y(cube_rotation.y);
+			transformed_vertex.rotate_z(cube_rotation.z);
+
+			transformed_vertex.z -= camera_position.z;
+
+			//project 3D to 2D
+			vec2_t projected_point = project(transformed_vertex);
+			
+			//scale and translate points to middle of screen
+			projected_point.x += (display.window_width / 2);
+			projected_point.y += (display.window_height / 2);
+
+			projected_triangle.points[j] = projected_point;
+		}
+
+		//save projected triangle to triangle renderer
+		triangles_to_render[i] = projected_triangle;
 	}
+
 }
 
-//c++ way :(
+//TODO: use static display
 void render(Display& display)
 {
 	display.draw_grid();
 
-	for (size_t i = 0; i < N_POINT; i++)
+	//loop through triangles
+	for (size_t i = 0; i < triangles_to_render.size(); i++)
 	{	
-		vec2_t projected_point = projected_points[i];
-		display.draw_rect(
-			projected_point.x + (display.window_width / 2),
-			projected_point.y + (display.window_height / 2),
-			4,
-			4,
-			0xFFFFFF00);
+		triangle_t triangle = triangles_to_render[i];
+		display.draw_rect(triangle.points[0].x , triangle.points[0].y , 3, 3, 0xFFFFFF00);
+		display.draw_rect(triangle.points[1].x , triangle.points[1].y , 3, 3, 0xFFFFFF00);
+		display.draw_rect(triangle.points[2].x , triangle.points[2].y , 3, 3, 0xFFFFFF00);
 	}	
 
 	display.render_color_buffer();
@@ -128,7 +137,7 @@ int main(int argc, char* argv[])
 	while (is_running)
 	{
 		process_input();
-		update();
+		update(display);
 		render(display);
 	}
 

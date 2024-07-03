@@ -4,6 +4,10 @@
 #include <vector>
 #include <SDL2/SDL.h>
 
+
+extern const int fps;
+extern const int frame_target_time;
+
 class Display
 {
 

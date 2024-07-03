@@ -1,5 +1,7 @@
 #include "../include/display.h"
 
+const int fps = 30;
+const int frame_target_time = 1000/fps;
 
 Display::Display(int windowheight, int window_width)
         :window_height(window_height), window_width(window_width){}

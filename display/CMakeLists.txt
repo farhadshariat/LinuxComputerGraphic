@@ -8,7 +8,7 @@ file(GLOB_RECURSE DISPLAY_HEADERS *.h *.hpp)
 file(GLOB_RECURSE DISPLAY_SRC *.c *.cpp)
 
 add_library(display STATIC
-            ${DISPLAY_HEADERS} 
+            #${DISPLAY_HEADERS} 
             ${DISPLAY_SRC})
 target_include_directories(display PUBLIC ${DISPLAY_HEADERS})
 

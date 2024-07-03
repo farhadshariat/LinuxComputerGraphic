@@ -8,7 +8,7 @@ file(GLOB GEOMETRY_HEADERS *.h *.hpp)
 file(GLOB GEOMETRY_SRC *.c *.cpp)
 
 add_library(geometry STATIC
-            ${GEOMETRY_HEADERS} 
+            #${GEOMETRY_HEADERS} 
             ${GEOMETRY_SRC})
 target_include_directories(geometry PUBLIC ${GEOMETRY_HEADERS})
 
