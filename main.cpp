@@ -2,9 +2,10 @@
 #include "geometry/vector.h"
 #include "geometry/triangle.h"
 #include "geometry/mesh.h"
-#include <array>
+#include "asset/BlenderParser.h"
 
-std::vector<triangle_t> triangles_to_render(12, {0,0,0}); 
+std::vector<triangle_t> triangles_to_render;
+Mesh cube_mesh;
 
 vec3_t camera_position = {.x=0, .y=0, .z=-5};
 vec3_t cube_rotation = {.x=0, .y=0, .z=0};
@@ -26,6 +27,8 @@ void setup(Display& display)
 		display.window_width,
 		display.window_height
 	);
+
+	cube_mesh.load_cube_mesh_data();
 }
 
 void process_input()
@@ -64,18 +67,21 @@ void update(Display& display)
 
 	previous_frame_time = SDL_GetTicks();
 
-	cube_rotation.x += 0.01;
-	cube_rotation.y += 0.01;
-	cube_rotation.z += 0.01;
+	//clear every frame
+	triangles_to_render.clear();
 
-	for (size_t i = 0; i < mesh_faces.size(); i++)
+	cube_mesh.rotataion.x += 0.01;
+	cube_mesh.rotataion.y += 0.01;
+	cube_mesh.rotataion.z += 0.01;
+
+	for (size_t i = 0; i < cube_faces.size(); i++)
 	{
-		auto mesh_face = mesh_faces[i];
+		auto mesh_face = cube_mesh.faces[i];
 
 		std::array<vec3_t,3> face_vertices;
-		face_vertices[0] = mesh_vertices[mesh_face.a - 1];
-		face_vertices[1] = mesh_vertices[mesh_face.b - 1];
-		face_vertices[2] = mesh_vertices[mesh_face.c - 1];
+		face_vertices[0] = cube_mesh.vertices[mesh_face.a - 1];
+		face_vertices[1] = cube_mesh.vertices[mesh_face.b - 1];
+		face_vertices[2] = cube_mesh.vertices[mesh_face.c - 1];
 
 		triangle_t projected_triangle;
 
@@ -83,9 +89,9 @@ void update(Display& display)
 		{
 			auto transformed_vertex = face_vertices[j];
 
-			transformed_vertex.rotate_x(cube_rotation.x);
-			transformed_vertex.rotate_y(cube_rotation.y);
-			transformed_vertex.rotate_z(cube_rotation.z);
+			transformed_vertex.rotate_x(cube_mesh.rotataion.x);
+			transformed_vertex.rotate_y(cube_mesh.rotataion.y);
+			transformed_vertex.rotate_z(cube_mesh.rotataion.z);
 
 			transformed_vertex.z -= camera_position.z;
 
@@ -100,7 +106,7 @@ void update(Display& display)
 		}
 
 		//save projected triangle to triangle renderer
-		triangles_to_render[i] = projected_triangle;
+		triangles_to_render.push_back(projected_triangle);
 	}
 
 }
@@ -117,6 +123,13 @@ void render(Display& display)
 		display.draw_rect(triangle.points[0].x , triangle.points[0].y , 3, 3, 0xFFFFFF00);
 		display.draw_rect(triangle.points[1].x , triangle.points[1].y , 3, 3, 0xFFFFFF00);
 		display.draw_rect(triangle.points[2].x , triangle.points[2].y , 3, 3, 0xFFFFFF00);
+
+	display.draw_triangle(
+		triangle.points[0].x, triangle.points[0].y,
+		triangle.points[1].x, triangle.points[1].y,
+		triangle.points[2].x, triangle.points[2].y,
+		0xFF00FF00
+		);
 	}	
 
 	display.render_color_buffer();
@@ -128,22 +141,29 @@ void render(Display& display)
 
 int main(int argc, char* argv[])
 {
-    Display display(600, 800);
+    // Display display(600, 800);
 
-	is_running = display.initialize_window();
+	// is_running = display.initialize_window();
 
-	setup(display);
+	// setup(display);
 
-	while (is_running)
+	// while (is_running)
+	// {
+	// 	process_input();
+	// 	update(display);
+	// 	render(display);
+	// }
+
+	// display.destroye_window();
+
+	//assets::BlenderParser parser;
+	//parser.ParseObj("asset/cube.txt");
+
+	std::ifstream file { "/home/farhad/Desktop/C++/ComputerGraphic/cube.txt" };
+	if(file)
 	{
-		process_input();
-		update(display);
-		render(display);
+		std::cout<<"found";
 	}
-
-	display.destroye_window();
-
-    std::cout<<"i hate cmake"<<'\n';
 
     return 0;
 }

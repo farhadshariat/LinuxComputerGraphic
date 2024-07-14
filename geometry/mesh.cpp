@@ -1,7 +1,7 @@
 #include "mesh.h"
 #include "triangle.h"
 
-std::vector<vec3_t> mesh_vertices = {
+std::vector<vec3_t> cube_vertices = {
     {.x = -1, .y = -1, .z = -1},
     {.x = -1, .y =  1, .z = -1},
     {.x =  1, .y =  1, .z = -1},
@@ -12,7 +12,7 @@ std::vector<vec3_t> mesh_vertices = {
     {.x = -1, .y = -1, .z =  1},
 };
 
-std::vector<face_t> mesh_faces=
+std::vector<face_t> cube_faces=
 {
     //front
     {.a = 1, .b = 2, .c = 3},
@@ -38,3 +38,10 @@ std::vector<face_t> mesh_faces=
     {.a = 6, .b = 8, .c = 1},
     {.a = 6, .b = 1, .c = 4},
 };
+
+void Mesh::load_cube_mesh_data()
+{
+    //call copy constructor
+    this->vertices = cube_vertices;
+    this->faces = cube_faces;
+}
