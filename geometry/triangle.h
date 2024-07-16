@@ -4,14 +4,16 @@
 #include <iostream>
 #include <array>
 
-struct face_t
+class face_t
 {
+public:
     float a;
     float b;
     float c;
 };
 
-struct triangle_t
+class triangle_t
 {
+public:
     std::array<vec2_t,3> points;
 };

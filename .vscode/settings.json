@@ -62,6 +62,8 @@
         "__threading_support": "cpp",
         "__verbose_abort": "cpp",
         "ios": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "fstream": "cpp",
+        "geometry": "cpp"
     }
 }

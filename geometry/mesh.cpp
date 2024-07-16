@@ -1,5 +1,6 @@
 #include "mesh.h"
 #include "triangle.h"
+#include "../asset/BlenederObjParser.h"
 
 std::vector<vec3_t> cube_vertices = {
     {.x = -1, .y = -1, .z = -1},
@@ -42,6 +43,12 @@ std::vector<face_t> cube_faces=
 void Mesh::load_cube_mesh_data()
 {
     //call copy constructor
-    this->vertices = cube_vertices;
-    this->faces = cube_faces;
+    // this->vertices = cube_vertices;
+    // this->faces = cube_faces;
+
+    assets::BlenederObjParser parser = assets::BlenederObjParser("../BlenderObject/cube.txt");
+    parser.parse_object();
+
+    this->vertices = std::move(parser.vertices);
+    this->faces = std::move(parser.faces);
 }

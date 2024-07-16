@@ -2,12 +2,14 @@
 #include "geometry/vector.h"
 #include "geometry/triangle.h"
 #include "geometry/mesh.h"
-#include "asset/BlenderParser.h"
+#include "asset/BlenederObjParser.h"
+#include "asset/utility.h"
+#include <memory>
 
 std::vector<triangle_t> triangles_to_render;
 Mesh cube_mesh;
 
-vec3_t camera_position = {.x=0, .y=0, .z=-5};
+vec3_t camera_position = {.x=0, .y=0, .z=0};
 vec3_t cube_rotation = {.x=0, .y=0, .z=0};
 
 float fov_factor = 640;
@@ -74,7 +76,7 @@ void update(Display& display)
 	cube_mesh.rotataion.y += 0.01;
 	cube_mesh.rotataion.z += 0.01;
 
-	for (size_t i = 0; i < cube_faces.size(); i++)
+	for (size_t i = 0; i < cube_mesh.faces.size(); i++)
 	{
 		auto mesh_face = cube_mesh.faces[i];
 
@@ -83,7 +85,7 @@ void update(Display& display)
 		face_vertices[1] = cube_mesh.vertices[mesh_face.b - 1];
 		face_vertices[2] = cube_mesh.vertices[mesh_face.c - 1];
 
-		triangle_t projected_triangle;
+		std::array<vec3_t,3> transformed_vertices;
 
 		for (size_t j = 0; j < face_vertices.size(); j++)
 		{
@@ -93,10 +95,42 @@ void update(Display& display)
 			transformed_vertex.rotate_y(cube_mesh.rotataion.y);
 			transformed_vertex.rotate_z(cube_mesh.rotataion.z);
 
-			transformed_vertex.z -= camera_position.z;
+			transformed_vertex.z += 5;
 
+			//save transformed vertices
+			transformed_vertices[j] = transformed_vertex;
+		}
+
+		//check backface culling
+		// A B C Clockwise
+		vec3_t vector_a = transformed_vertices[0];/*    A    */
+		vec3_t vector_b = transformed_vertices[1];/*   / \   */
+		vec3_t vector_c = transformed_vertices[2];/*  C---B  */
+
+		//get vector subtraction AC AB
+		vec3_t vector_ab = vector_b - vector_a;
+		vec3_t vector_ac = vector_c - vector_a;
+
+		//compute the face normal (left handed system for cross product)
+		vec3_t normal = vector_ab.cross(vector_ac);
+
+		// normalize face normal vector
+		normal.normalize();
+
+		//find vector between point on face triangle and camera
+		vec3_t camera_ray = camera_position - vector_a;
+
+		float dot_product = normal * camera_ray;
+
+		if(dot_product < 0)
+			continue;
+
+		triangle_t projected_triangle;
+
+		for(size_t j = 0; j < transformed_vertices.size(); j++)
+		{
 			//project 3D to 2D
-			vec2_t projected_point = project(transformed_vertex);
+			vec2_t projected_point = project(transformed_vertices[j]);
 			
 			//scale and translate points to middle of screen
 			projected_point.x += (display.window_width / 2);
@@ -138,32 +172,22 @@ void render(Display& display)
 	SDL_RenderPresent(display.renderer);
 }
 
-
 int main(int argc, char* argv[])
 {
-    // Display display(600, 800);
+    Display display(600, 800);
 
-	// is_running = display.initialize_window();
+	is_running = display.initialize_window();
 
-	// setup(display);
+	setup(display);
 
-	// while (is_running)
-	// {
-	// 	process_input();
-	// 	update(display);
-	// 	render(display);
-	// }
-
-	// display.destroye_window();
-
-	//assets::BlenderParser parser;
-	//parser.ParseObj("asset/cube.txt");
-
-	std::ifstream file { "/home/farhad/Desktop/C++/ComputerGraphic/cube.txt" };
-	if(file)
+	while (is_running)
 	{
-		std::cout<<"found";
+		process_input();
+		update(display);
+		render(display);
 	}
+
+	display.destroye_window();
 
     return 0;
 }
