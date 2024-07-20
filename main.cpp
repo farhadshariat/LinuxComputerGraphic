@@ -20,6 +20,9 @@ int previous_frame_time = 0;
 //c++ way :(
 void setup(Display& display)
 {
+	render_method_config = render_method::RENDER_WIRE;
+	cull_method_config = cull_method::CULL_BACKFACE;
+
 	display.color_buffer.reserve(display.window_height* display.window_width);
 
 	display.color_buffer_texture = SDL_CreateTexture(
@@ -46,6 +49,18 @@ void process_input()
 	case SDL_KEYDOWN:
 		if (event.key.keysym.sym == SDLK_ESCAPE)
 			is_running = false;
+		if (event.key.keysym.sym == SDLK_1)
+			render_method_config = render_method::RENDER_WIRE_VERTEX;
+		if (event.key.keysym.sym == SDLK_2)
+			render_method_config = render_method::RENDER_WIRE;
+		if (event.key.keysym.sym == SDLK_3)
+			render_method_config = render_method::RENDER_FILL_TRIANGLE;
+		if (event.key.keysym.sym == SDLK_4)
+			render_method_config = render_method::RENDER_FILL_TRIANGLE_WIRE;
+		if (event.key.keysym.sym == SDLK_c)
+			cull_method_config = cull_method::CULL_BACKFACE;
+		if (event.key.keysym.sym == SDLK_d)
+			cull_method_config = cull_method::CULL_NONE;
 		break;
 
 	default:
@@ -101,43 +116,52 @@ void update(Display& display)
 			transformed_vertices[j] = transformed_vertex;
 		}
 
-		//check backface culling
-		// A B C Clockwise
-		vec3_t vector_a = transformed_vertices[0];/*    A    */
-		vec3_t vector_b = transformed_vertices[1];/*   / \   */
-		vec3_t vector_c = transformed_vertices[2];/*  C---B  */
+		if(cull_method_config == cull_method::CULL_BACKFACE)
+		{
+			//check backface culling
+			// A B C Clockwise
+			vec3_t vector_a = transformed_vertices[0];/*    A    */
+			vec3_t vector_b = transformed_vertices[1];/*   / \   */
+			vec3_t vector_c = transformed_vertices[2];/*  C---B  */
 
-		//get vector subtraction AC AB
-		vec3_t vector_ab = vector_b - vector_a;
-		vec3_t vector_ac = vector_c - vector_a;
+			//get vector subtraction AC AB
+			vec3_t vector_ab = vector_b - vector_a;
+			vec3_t vector_ac = vector_c - vector_a;
 
-		//compute the face normal (left handed system for cross product)
-		vec3_t normal = vector_ab.cross(vector_ac);
+			//compute the face normal (left handed system for cross product)
+			vec3_t normal = vector_ab.cross(vector_ac);
 
-		// normalize face normal vector
-		normal.normalize();
+			// normalize face normal vector
+			normal.normalize();
 
-		//find vector between point on face triangle and camera
-		vec3_t camera_ray = camera_position - vector_a;
+			//find vector between point on face triangle and camera
+			vec3_t camera_ray = camera_position - vector_a;
 
-		float dot_product = normal * camera_ray;
+			float dot_product = normal * camera_ray;
 
-		if(dot_product < 0)
-			continue;
+			if(dot_product < 0)
+				continue;
+		}
 
-		triangle_t projected_triangle;
+		std::array<vec2_t, 3> projected_points;
 
 		for(size_t j = 0; j < transformed_vertices.size(); j++)
 		{
 			//project 3D to 2D
-			vec2_t projected_point = project(transformed_vertices[j]);
+			projected_points[j] = project(transformed_vertices[j]);
 			
 			//scale and translate points to middle of screen
-			projected_point.x += (display.window_width / 2);
-			projected_point.y += (display.window_height / 2);
-
-			projected_triangle.points[j] = projected_point;
+			projected_points[j].x += (display.window_width / 2);
+			projected_points[j].y += (display.window_height / 2);
 		}
+
+		float avg_depth = (float)(transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3;
+
+		triangle_t projected_triangle;
+		projected_triangle.points = projected_points;
+		projected_triangle.color = mesh_face.color;
+		projected_triangle.avg_depth = avg_depth;
+
 
 		//save projected triangle to triangle renderer
 		triangles_to_render.push_back(projected_triangle);
@@ -154,17 +178,42 @@ void render(Display& display)
 	for (size_t i = 0; i < triangles_to_render.size(); i++)
 	{	
 		triangle_t triangle = triangles_to_render[i];
-		display.draw_rect(triangle.points[0].x , triangle.points[0].y , 3, 3, 0xFFFFFF00);
-		display.draw_rect(triangle.points[1].x , triangle.points[1].y , 3, 3, 0xFFFFFF00);
-		display.draw_rect(triangle.points[2].x , triangle.points[2].y , 3, 3, 0xFFFFFF00);
 
-	display.draw_triangle(
-		triangle.points[0].x, triangle.points[0].y,
-		triangle.points[1].x, triangle.points[1].y,
-		triangle.points[2].x, triangle.points[2].y,
-		0xFF00FF00
-		);
-	}	
+		if(render_method_config == render_method::RENDER_FILL_TRIANGLE 
+		|| render_method_config == render_method::RENDER_FILL_TRIANGLE_WIRE)
+		{
+			display.draw_filled_triangle(
+				triangle.points[0].x, triangle.points[0].y,
+				triangle.points[1].x, triangle.points[1].y,
+				triangle.points[2].x, triangle.points[2].y,
+				triangle.color
+			);			
+		}
+		if(render_method_config == render_method::RENDER_WIRE 
+		|| render_method_config == render_method::RENDER_WIRE_VERTEX 
+		|| render_method_config == render_method::RENDER_FILL_TRIANGLE_WIRE)
+		{
+			// display.draw_rect(triangle.points[0].x , triangle.points[0].y , 3, 3, 0xFFFFFF00);
+			// display.draw_rect(triangle.points[1].x , triangle.points[1].y , 3, 3, 0xFFFFFF00);
+			// display.draw_rect(triangle.points[2].x , triangle.points[2].y , 3, 3, 0xFFFFFF00);
+
+			display.draw_triangle(
+				triangle.points[0].x, triangle.points[0].y,
+				triangle.points[1].x, triangle.points[1].y,
+				triangle.points[2].x, triangle.points[2].y,
+				0xFFFFFFFF
+				);
+		}
+		if(render_method_config == render_method::RENDER_WIRE_VERTEX)
+		{
+			display.draw_rect(triangle.points[0].x - 3 , triangle.points[0].y - 3 , 6, 6, 0xFFFFFF00);
+			display.draw_rect(triangle.points[1].x - 3 , triangle.points[1].y - 3 , 6, 6, 0xFFFFFF00);
+			display.draw_rect(triangle.points[2].x - 3 , triangle.points[2].y - 3 , 6, 6, 0xFFFFFF00);
+		}
+	}
+
+	// display.draw_filled_triangle(500, 200, 100, 400, 500, 700, 0xFF00FF00);
+	// display.draw_triangle(500, 200, 100, 400, 500, 700, 0xFF00FF00);
 
 	display.render_color_buffer();
 	display.clear_color_buffer(0xFF000000);
