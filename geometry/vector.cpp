@@ -147,6 +147,12 @@ float vec3_t::operator*(const vec3_t& b)
     return x * b.x + y * b.y + z * b.z;
 }
 
+vec4_t vec3_t::convert_to_vec4()
+{
+    vec4_t tmp{this->x,this->y, this->z, 1.0};
+    return tmp;
+}
+
 void vec3_t::rotate_x(float angle)
 {
     float y = this->y * cos(angle) - this->z * sin(angle);
@@ -172,4 +178,10 @@ void vec3_t::rotate_z(float angle)
 
     this->x  = x;
     this->y  = y;
+}
+
+vec3_t vec4_t::convert_to_vec3()
+{
+    vec3_t tmp{this->x,this->y, this->z};
+    return tmp;
 }

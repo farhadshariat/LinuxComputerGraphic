@@ -2,6 +2,7 @@
 #include "geometry/vector.h"
 #include "geometry/triangle.h"
 #include "geometry/mesh.h"
+#include "geometry/matrix.h"
 #include "asset/BlenederObjParser.h"
 #include "asset/utility.h"
 #include <memory>
@@ -90,6 +91,11 @@ void update(Display& display)
 	cube_mesh.rotataion.x += 0.01;
 	cube_mesh.rotataion.y += 0.01;
 	cube_mesh.rotataion.z += 0.01;
+	
+	cube_mesh.scale.x += 0.002;
+
+	matrix4_t scale_matrix;
+	scale_matrix.make_scale(cube_mesh.scale.x, cube_mesh.scale.y, cube_mesh.scale.z);
 
 	for (size_t i = 0; i < cube_mesh.faces.size(); i++)
 	{
@@ -100,15 +106,14 @@ void update(Display& display)
 		face_vertices[1] = cube_mesh.vertices[mesh_face.b - 1];
 		face_vertices[2] = cube_mesh.vertices[mesh_face.c - 1];
 
-		std::array<vec3_t,3> transformed_vertices;
+		std::array<vec4_t,3> transformed_vertices;
 
 		for (size_t j = 0; j < face_vertices.size(); j++)
 		{
-			auto transformed_vertex = face_vertices[j];
+			auto transformed_vertex = face_vertices[j].convert_to_vec4();
 
-			transformed_vertex.rotate_x(cube_mesh.rotataion.x);
-			transformed_vertex.rotate_y(cube_mesh.rotataion.y);
-			transformed_vertex.rotate_z(cube_mesh.rotataion.z);
+			//TODO: add matrix operation
+			transformed_vertex = scale_matrix.mul_vec4(transformed_vertex);
 
 			transformed_vertex.z += 5;
 
@@ -120,9 +125,9 @@ void update(Display& display)
 		{
 			//check backface culling
 			// A B C Clockwise
-			vec3_t vector_a = transformed_vertices[0];/*    A    */
-			vec3_t vector_b = transformed_vertices[1];/*   / \   */
-			vec3_t vector_c = transformed_vertices[2];/*  C---B  */
+			vec3_t vector_a = transformed_vertices[0].convert_to_vec3();/*    A    */
+			vec3_t vector_b = transformed_vertices[1].convert_to_vec3();/*   / \   */
+			vec3_t vector_c = transformed_vertices[2].convert_to_vec3();/*  C---B  */
 
 			//get vector subtraction AC AB
 			vec3_t vector_ab = vector_b - vector_a;
@@ -148,7 +153,7 @@ void update(Display& display)
 		for(size_t j = 0; j < transformed_vertices.size(); j++)
 		{
 			//project 3D to 2D
-			projected_points[j] = project(transformed_vertices[j]);
+			projected_points[j] = project(transformed_vertices[j].convert_to_vec3());
 			
 			//scale and translate points to middle of screen
 			projected_points[j].x += (display.window_width / 2);
@@ -167,6 +172,11 @@ void update(Display& display)
 		triangles_to_render.push_back(projected_triangle);
 	}
 
+	//acsending order by
+	std::sort(triangles_to_render.begin(), triangles_to_render.end(), [ ]( const auto& lhs, const auto& rhs )
+	{
+		return lhs.avg_depth > rhs.avg_depth;
+	});
 }
 
 //TODO: use static display
