@@ -64,6 +64,8 @@
         "ios": "cpp",
         "locale": "cpp",
         "fstream": "cpp",
-        "geometry": "cpp"
+        "geometry": "cpp",
+        "iomanip": "cpp",
+        "sstream": "cpp"
     }
 }
