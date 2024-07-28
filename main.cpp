@@ -93,6 +93,7 @@ void update(Display& display)
 	cube_mesh.rotataion.z += 0.01;
 	
 	cube_mesh.scale.x += 0.002;
+	cube_mesh.scale.y += 0.002;
 
 	matrix4_t scale_matrix;
 	scale_matrix.make_scale(cube_mesh.scale.x, cube_mesh.scale.y, cube_mesh.scale.z);
