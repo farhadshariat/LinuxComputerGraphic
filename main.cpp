@@ -88,15 +88,26 @@ void update(Display& display)
 	//clear every frame
 	triangles_to_render.clear();
 
-	cube_mesh.rotataion.x += 0.01;
+	//cube_mesh.rotataion.x += 0.01;
 	cube_mesh.rotataion.y += 0.01;
-	cube_mesh.rotataion.z += 0.01;
+	//cube_mesh.rotataion.z += 0.01;
 	
-	cube_mesh.scale.x += 0.002;
-	cube_mesh.scale.y += 0.002;
+	//cube_mesh.scale.x += 0.002;
+	//cube_mesh.scale.y += 0.002;
+	//cube_mesh.translation.x += 0.01;
+	//cube_mesh.translation.y += 0.01;
+	cube_mesh.translation.z = 5;
 
 	matrix4_t scale_matrix;
+	matrix4_t translation_matrix;
+	matrix4_t rotation_matrix_x;
+	matrix4_t rotation_matrix_y;
+	matrix4_t rotation_matrix_z;
 	scale_matrix.make_scale(cube_mesh.scale.x, cube_mesh.scale.y, cube_mesh.scale.z);
+	translation_matrix.make_translation(cube_mesh.translation.x, cube_mesh.translation.y, cube_mesh.translation.z);
+	rotation_matrix_x.make_rotation_x(cube_mesh.rotataion.x);
+	rotation_matrix_y.make_rotation_y(cube_mesh.rotataion.y);
+	rotation_matrix_z.make_rotation_z(cube_mesh.rotataion.z);
 
 	for (size_t i = 0; i < cube_mesh.faces.size(); i++)
 	{
@@ -113,10 +124,16 @@ void update(Display& display)
 		{
 			auto transformed_vertex = face_vertices[j].convert_to_vec4();
 
-			//TODO: add matrix operation
+			//scaling operation
 			transformed_vertex = scale_matrix.mul_vec4(transformed_vertex);
 
-			transformed_vertex.z += 5;
+			//rotation operation
+			transformed_vertex = rotation_matrix_x.mul_vec4(transformed_vertex);
+			transformed_vertex = rotation_matrix_y.mul_vec4(transformed_vertex);
+			transformed_vertex = rotation_matrix_z.mul_vec4(transformed_vertex);
+
+			//translation operation
+			transformed_vertex = translation_matrix.mul_vec4(transformed_vertex);
 
 			//save transformed vertices
 			transformed_vertices[j] = transformed_vertex;
