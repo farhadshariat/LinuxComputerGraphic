@@ -9,13 +9,16 @@ add_subdirectory("geometry")
 add_subdirectory("asset")
 
 find_package(SDL2 REQUIRED)
-# find_package(Eigen3 REQUIRED)
+#find_package(Eigen3 REQUIRED)
 #include_directories(SDL2Test ${SDL2_INCLUDE_DIRS})
+
+#reveal compiler Commands
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(main main.cpp)
 target_link_libraries(main PUBLIC 
     ${SDL2_LIBRARIES} 
-    ${Eigen3_LIBRARIES} 
+    #${Eigen3_LIBRARIES} 
     display
     geometry
     asset)
