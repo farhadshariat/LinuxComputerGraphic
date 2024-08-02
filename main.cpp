@@ -124,16 +124,28 @@ void update(Display& display)
 		{
 			auto transformed_vertex = face_vertices[j].convert_to_vec4();
 
-			//scaling operation
-			transformed_vertex = scale_matrix.mul_vec4(transformed_vertex);
+			// //scaling operation
+			// transformed_vertex = scale_matrix.mul_vec4(transformed_vertex);
 
-			//rotation operation
-			transformed_vertex = rotation_matrix_x.mul_vec4(transformed_vertex);
-			transformed_vertex = rotation_matrix_y.mul_vec4(transformed_vertex);
-			transformed_vertex = rotation_matrix_z.mul_vec4(transformed_vertex);
+			// //rotation operation
+			// transformed_vertex = rotation_matrix_x.mul_vec4(transformed_vertex);
+			// transformed_vertex = rotation_matrix_y.mul_vec4(transformed_vertex);
+			// transformed_vertex = rotation_matrix_z.mul_vec4(transformed_vertex);
 
-			//translation operation
-			transformed_vertex = translation_matrix.mul_vec4(transformed_vertex);
+			// //translation operation
+			// transformed_vertex = translation_matrix.mul_vec4(transformed_vertex);
+
+			//world matrix
+			matrix4_t world_matrix;
+			world_matrix = world_matrix.identity();
+			world_matrix = scale_matrix.mul_mat4(world_matrix);
+			world_matrix = rotation_matrix_z.mul_mat4(world_matrix);
+			world_matrix = rotation_matrix_y.mul_mat4(world_matrix);
+			world_matrix = rotation_matrix_x.mul_mat4(world_matrix);
+			world_matrix = translation_matrix.mul_mat4(world_matrix);
+			
+			//apply world matrix trasnsformation to a vector
+			transformed_vertex = world_matrix.mul_vec4(transformed_vertex);
 
 			//save transformed vertices
 			transformed_vertices[j] = transformed_vertex;

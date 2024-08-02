@@ -22,3 +22,6 @@ target_link_libraries(main PUBLIC
     display
     geometry
     asset)
+
+#specify compiler std version
+target_compile_features(main PUBLIC cxx_std_23)

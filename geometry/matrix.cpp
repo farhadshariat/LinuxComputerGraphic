@@ -1,9 +1,23 @@
 #include "matrix.h"
+#include <chrono>
+
 /// [0  1  2  3 ]
 /// [4  5  6  7 ]
 /// [8  9  10 11]
 /// [12 13 14 15]
-void matrix4_t::identity()
+
+matrix4_t& matrix4_t::zero()
+{
+    data = {
+            0,0,0,0,
+            0,0,0,0,
+            0,0,0,0,
+            0,0,0,0
+            };
+    return *this;
+}
+
+matrix4_t& matrix4_t::identity()
 {
     data = {
             1,0,0,0,
@@ -11,6 +25,7 @@ void matrix4_t::identity()
             0,0,1,0,
             0,0,0,1
             };
+    return *this;
 }
 
 void matrix4_t::make_scale(float sx, float sy, float sz)
@@ -71,4 +86,41 @@ vec4_t matrix4_t::mul_vec4(vec4_t v)
 
     vec4_t tmp = {.x=x, .y=y, .z=z, .w=w};
     return tmp;
+}
+
+matrix4_t matrix4_t::mul_mat4(matrix4_t b)
+{   
+    //NOTE: most of the time has better performance!!!
+    // matrix4_t temp;
+    // temp = temp.zero();
+
+    // for (size_t i = 0; i < 4; i++)
+    // {
+    //     for (size_t k = 0; k < 4; k++)
+    //     {
+    //         for (size_t j = 0; j < 4; j++)
+    //         {
+    //             temp.data[i * 4 + j] += this->data[i * 4 + k] * b.data[k * 4 + j];
+    //         }
+    //     }
+    // }
+
+    // return temp;
+
+    matrix4_t temp;
+    temp = temp.zero();
+    
+    for (size_t i = 0; i < 4; i++)
+    {
+        for (size_t j = 0; j < 4; j++)
+        {
+            temp.data[i * 4 + j] = 
+                  this->data[i * 4 + 0] * b.data[0 * i + j] 
+                + this->data[i * 4 + 1]  * b.data[1 * 4 + j] 
+                + this->data[i * 4 + 2] * b.data[2 * 4 + j] + this->data[i * 4 + 3] * b.data[3 * 4 + j];
+        }
+        
+    }
+
+    return temp;
 }
