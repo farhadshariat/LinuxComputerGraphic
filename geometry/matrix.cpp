@@ -124,3 +124,28 @@ matrix4_t matrix4_t::mul_mat4(matrix4_t b)
 
     return temp;
 }
+
+void matrix4_t::make_perspective(float fov, float aspect, float znear,  float zfar)
+{
+    this->zero();
+    this->data[0] = aspect * (1 / tan(fov / 2));
+    this->data[5] = (1 / tan(fov / 2));
+    this->data[10] = zfar / (zfar - znear);
+    this->data[11] = (-zfar * znear) / (zfar - znear);
+    this->data[14] = 1.0;
+}
+
+vec4_t matrix4_t::mul_vec4_project(vec4_t v)
+{
+    vec4_t result = this->mul_vec4(v);
+
+    //perform perspective divide with original z-value stroed in w
+    if(result.w != 0.0)
+    {
+        result.x /= result.w;
+        result.y /= result.w;
+        result.z /= result.w;
+    }
+
+    return result; 
+}

@@ -17,7 +17,7 @@ public:
 class triangle_t
 {
 public:
-    std::array<vec2_t,3> points;
+    std::array<vec4_t,3> points;
     uint32_t color;
     float avg_depth;
 };
