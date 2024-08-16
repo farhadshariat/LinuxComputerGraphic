@@ -1,8 +1,9 @@
 #include "display/include/display.h"
 #include "geometry/vector.h"
 #include "geometry/triangle.h"
-#include "geometry/mesh.h"
 #include "geometry/matrix.h"
+#include "geometry/light.h"
+#include "geometry/mesh.h"
 #include "asset/BlenederObjParser.h"
 #include "asset/utility.h"
 #include <memory>
@@ -140,29 +141,29 @@ void update(Display& display)
 			transformed_vertices[j] = transformed_vertex;
 		}
 
+		//check backface culling
+		// A B C Clockwise
+		vec3_t vector_a = transformed_vertices[0].convert_to_vec3();/*    A    */
+		vec3_t vector_b = transformed_vertices[1].convert_to_vec3();/*   / \   */
+		vec3_t vector_c = transformed_vertices[2].convert_to_vec3();/*  C---B  */
+
+		//get vector subtraction AC AB
+		vec3_t vector_ab = vector_b - vector_a;
+		vec3_t vector_ac = vector_c - vector_a;
+
+		//compute the face normal (left handed system for cross product)
+		vec3_t normal = vector_ab.cross(vector_ac);
+
+		// normalize face normal vector
+		normal.normalize();
+
+		//find vector between point on face triangle and camera
+		vec3_t camera_ray = camera_position - vector_a;
+
+		float dot_product = normal * camera_ray;
+
 		if(cull_method_config == cull_method::CULL_BACKFACE)
 		{
-			//check backface culling
-			// A B C Clockwise
-			vec3_t vector_a = transformed_vertices[0].convert_to_vec3();/*    A    */
-			vec3_t vector_b = transformed_vertices[1].convert_to_vec3();/*   / \   */
-			vec3_t vector_c = transformed_vertices[2].convert_to_vec3();/*  C---B  */
-
-			//get vector subtraction AC AB
-			vec3_t vector_ab = vector_b - vector_a;
-			vec3_t vector_ac = vector_c - vector_a;
-
-			//compute the face normal (left handed system for cross product)
-			vec3_t normal = vector_ab.cross(vector_ac);
-
-			// normalize face normal vector
-			normal.normalize();
-
-			//find vector between point on face triangle and camera
-			vec3_t camera_ray = camera_position - vector_a;
-
-			float dot_product = normal * camera_ray;
-
 			if(dot_product < 0)
 				continue;
 		}
@@ -184,9 +185,18 @@ void update(Display& display)
 
 		float avg_depth = (float)(transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3;
 
+		// Calculate dot product of light ray directon to face triangle norm
+		/* we are adding negative to dot product because when norm is in same direction
+		 * with light ray we want it to be white. if we remove minus it gives us black
+		*/
+		float light_intensity_factor = -(normal * light.direction);
+		
+		// Calculate the trinagle color based on the light angle
+		uint32_t triangle_color = light.apply_intensity(mesh_face.color, light_intensity_factor);
+
 		triangle_t projected_triangle;
 		projected_triangle.points = projected_points;
-		projected_triangle.color = mesh_face.color;
+		projected_triangle.color = triangle_color;
 		projected_triangle.avg_depth = avg_depth;
 
 

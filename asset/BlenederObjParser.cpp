@@ -29,6 +29,7 @@ void assets::BlenederObjParser::parse_object()
         if(std::find(lineItems.begin(), lineItems.end(), "f") != lineItems.end())
         {
             face_t tmp;
+            tmp.color = 0xFFFFFFFF;
             for (size_t i = 1; i < lineItems.size(); i++)
             {
                 std::vector<std::string> faceParams = assets::split(lineItems[i], '/');
